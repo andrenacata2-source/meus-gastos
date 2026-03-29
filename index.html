@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -599,7 +600,7 @@ const INCOME_CATS = ["Salário","Vale"];
 
 let entries = [];
 let categories = JSON.parse(localStorage.getItem('cats') || 'null') || DEFAULT_CATS;
-let scriptUrl = localStorage.getItem('scriptUrl') || '';
+let scriptUrl = localStorage.getItem('scriptUrl') || 'https://script.google.com/macros/s/AKfycbxoT7_XkPWroJbRfhg84Y5CLPobtjnpOTIrQNXALELKqkC3q0apF0QW_ZvzqPykP8w1/exec';
 let currentMonth = new Date().toISOString().slice(0,7);
 let editingId = null;
 let batchItems = [];
