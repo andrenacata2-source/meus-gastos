@@ -555,15 +555,15 @@ pre{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
 <script>
 // ── DADOS ──────────────────────────────────────────────────
 const DEFAULT_CATS = {
-  "Salário":      ["Salário","13º","Férias","Bônus","Freelance"],
-  "Vale":         ["Vale Refeição","Vale Alimentação","Vale Transporte","Vale Cultura"],
-  "Alimentação":  ["Restaurante","Delivery","Mercado","Padaria","Lanche","Café"],
-  "Moradia":      ["Aluguel","Condomínio","Luz","Água","Internet","Gás","Manutenção"],
-  "Transporte":   ["Uber/99","Recarga Bilhete Único","Ônibus","Metrô","Gasolina","Estacionamento","Táxi"],
-  "Saúde":        ["Consulta","Farmácia","Exame","Plano de Saúde","Academia","Terapia","Dentista"],
-  "Lazer":        ["Bebida/Bar","Jogos","Streaming","Cinema","Show/Evento","Viagem","Restaurante/Lazer"],
+  "Alimentação":  ["Restaurante","Delivery","Mercado","Café"],
+  "Moradia":      ["Aluguel","Condomínio","Luz","Água","Internet","Gás","Manutenção","Móveis","Plantas","Decoração"],
+  "Transporte":   ["Uber/99","Recarga Bilhete Único","Ônibus","Metrô","Gasolina","Estacionamento"],
+  "Saúde":        ["Farmácia","Academia","Terapia","Dentista","Esportes"],
+  "Lazer":        ["Jogos","Streaming","Cinema","Show/Evento","Viagem","Balada","Bebida"],
   "Roupa":        ["Roupa","Calçado","Acessório"],
   "Presente":     ["Presente"],
+  "Salário":      ["Salário","13º","Férias","Bônus","Freelance"],
+  "Vale":         ["Vale Refeição","Vale Alimentação","Vale Transporte","Vale Cultura"],
   "Outros":       ["Outros"]
 };
 
@@ -599,7 +599,9 @@ const RULES = [
 const INCOME_CATS = ["Salário","Vale"];
 
 let entries = [];
-let categories = JSON.parse(localStorage.getItem('cats') || 'null') || DEFAULT_CATS;
+// Always use DEFAULT_CATS as the source of truth — synced across all devices
+let categories = JSON.parse(JSON.stringify(DEFAULT_CATS));
+localStorage.setItem('cats', JSON.stringify(categories));
 let scriptUrl = localStorage.getItem('scriptUrl') || 'https://script.google.com/macros/s/AKfycbx5LMyeCxgQFislYmHpMZ9TaM8VLRfcz7lJ-f2Y-vOP1hSO9JplEB7VXxYgq3Cgkb0x/exec';
 let currentMonth = new Date().toISOString().slice(0,7);
 let editingId = null;
@@ -824,18 +826,25 @@ async function api(payload) {
 
 async function loadFromSheets() {
   setSyncStatus('loading');
-  const data = await api({ action: 'getAll' });
-  if (data && data.ok) {
-    entries = (data.entries||[]).map(e => ({...e, val: parseFloat(e.val)||0}));
-    localStorage.setItem('entries', JSON.stringify(entries));
-    renderAll();
-    setSyncStatus('ok');
-  } else {
-    const local = localStorage.getItem('entries');
-    if (local) entries = JSON.parse(local);
-    renderAll();
-    setSyncStatus(scriptUrl ? 'err' : 'none');
+  try {
+    // Use GET to fetch all entries — more reliable across devices
+    const r = await fetch(scriptUrl);
+    const data = await r.json();
+    if (data && data.ok) {
+      entries = (data.entries||[]).map(e => ({...e, val: parseFloat(e.val)||0}));
+      localStorage.setItem('entries', JSON.stringify(entries));
+      renderAll();
+      setSyncStatus('ok');
+      return;
+    }
+  } catch(err) {
+    // fall through to local cache
   }
+  // Fallback to local cache
+  const local = localStorage.getItem('entries');
+  if (local) entries = JSON.parse(local);
+  renderAll();
+  setSyncStatus(scriptUrl ? 'err' : 'none');
 }
 
 function setSyncStatus(state) {
