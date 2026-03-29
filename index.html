@@ -806,7 +806,7 @@ function updateMonthLabels() {
 }
 
 function filteredEntries() {
-  return entries.filter(e => (e.competencia||e.date?.slice(0,7)) === currentMonth);
+  return entries.filter(e => { const comp = e.competencia ? String(e.competencia).slice(0,7) : e.date?.slice(0,7); return comp === currentMonth; });
 }
 
 // ── API SHEETS ─────────────────────────────────────────────
